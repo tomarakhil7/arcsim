@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: good-api
+  namespace: production
+  labels:
+    app: good-api
+    environment: production
+spec:
+  replicas: 3  # ✅ Multiple replicas
+  selector:
+    matchLabels:
+      app: good-api
+  template:
+    metadata:
+      labels:
+        app: good-api
+    spec:
+      containers:
+      - name: api
+        image: myapp/api:v1.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: HTTP_TIMEOUT
+          value: "25000"  # ✅ 25s < 30s ingress timeout
+        - name: PORT
+          value: "8080"
+        readinessProbe:  # ✅ Has readiness probe
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:  # ✅ Has liveness probe
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"

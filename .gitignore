@@ -1,0 +1,30 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Test files
+test_files.txt
+good_files.txt
+/tmp/
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,88 @@
+name: ArcSim Reliability Check
+
+on:
+  pull_request:
+    paths:
+      - '**.yaml'
+      - '**.yml'
+      - '**.tf'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  reliability-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install ArcSim
+        run: |
+          pip install PyYAML python-hcl2 networkx
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | \
+            grep -E '\.(yaml|yml|tf)$' > changed_files.txt || true
+
+          if [ ! -s changed_files.txt ]; then
+            echo "No infrastructure files changed"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "Found infrastructure file changes:"
+            cat changed_files.txt
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run ArcSim
+        if: steps.changed-files.outputs.skip == 'false'
+        run: |
+          python -m arcsim.main --files changed_files.txt > report.md
+
+      - name: Post PR Comment
+        if: steps.changed-files.outputs.skip == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('report.md', 'utf8');
+
+            // Find existing ArcSim comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existingComment = comments.find(c =>
+              c.body.includes('ArcSim Reliability Analysis')
+            );
+
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: report
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: report
+              });
+            }

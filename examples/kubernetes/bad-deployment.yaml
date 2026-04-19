@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-service
+  namespace: production
+  labels:
+    app: api
+    environment: production
+spec:
+  replicas: 1  # 🔴 SPOF - only 1 replica!
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: api
+        image: myapp/api:v1.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: HTTP_TIMEOUT
+          value: "60000"  # 🔴 60s > 30s ingress timeout!
+        - name: DATABASE_URL
+          value: "postgresql://user:pass@db.example.com:5432/main?connect_timeout=90"  # 🔴 90s!
+        - name: PORT
+          value: "8080"
+        # 🔴 Missing readinessProbe!
+        # 🔴 Missing livenessProbe!
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
