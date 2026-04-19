@@ -21,41 +21,31 @@ ArcSim analyzes Kubernetes manifests and Terraform files to catch reliability ri
 
 ### GitHub Actions (Recommended)
 
-Add to `.github/workflows/arcsim.yml`:
+Add to `.github/workflows/reliability-check.yml`:
 
 ```yaml
 name: Reliability Check
 on: [pull_request]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   arcsim:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      
-      - name: Install ArcSim
-        run: pip install PyYAML python-hcl2 networkx
-      
-      - name: Get changed files
-        run: |
-          git diff --name-only origin/${{ github.base_ref }}...HEAD | \
-            grep -E '\.(yaml|yml|tf)$' > changed_files.txt || true
-      
-      - name: Run ArcSim
-        if: -s changed_files.txt
-        run: |
-          python -m arcsim.main --files changed_files.txt
+      - name: ArcSim Reliability Check
+        uses: tomarakhil7/arcsim@v1
 ```
+
+That's it! ArcSim will automatically analyze your PRs and post findings.
+
+**[📖 Full Action Documentation](./ACTION_USAGE.md)**
 
 ### Local Usage
 
