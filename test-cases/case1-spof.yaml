@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: production
+  labels:
+    app: payments
+    environment: production
+spec:
+  replicas: 1  # SPOF in production!
+  selector:
+    matchLabels:
+      app: payments
+  template:
+    metadata:
+      labels:
+        app: payments
+    spec:
+      containers:
+      - name: payment-processor
+        image: mycompany/payments:v2.0
+        ports:
+        - containerPort: 8080

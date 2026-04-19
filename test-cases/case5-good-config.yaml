@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: production
+  labels:
+    app: users
+    environment: production
+spec:
+  replicas: 3  # Good - multiple replicas
+  selector:
+    matchLabels:
+      app: users
+  template:
+    metadata:
+      labels:
+        app: users
+    spec:
+      containers:
+      - name: user-api
+        image: mycompany/users:v1.0
+        ports:
+        - containerPort: 8080
+        readinessProbe:  # Good - has readiness probe
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:  # Good - has liveness probe
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
