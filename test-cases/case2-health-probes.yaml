@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: production
+  labels:
+    app: orders
+    environment: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: orders
+  template:
+    metadata:
+      labels:
+        app: orders
+    spec:
+      containers:
+      - name: order-api
+        image: mycompany/orders:v1.5
+        ports:
+        - containerPort: 9090
+        # Missing readinessProbe
+        # Missing livenessProbe

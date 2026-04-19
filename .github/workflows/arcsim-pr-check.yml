@@ -1,0 +1,69 @@
+name: ArcSim Reliability Check
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**.yaml'
+      - '**.yml'
+      - '**.tf'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  arcsim-check:
+    runs-on: ubuntu-latest
+    name: Check Infrastructure Reliability
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run ArcSim
+        uses: ./
+        id: arcsim
+        continue-on-error: true
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('arcsim-report.md', 'utf8');
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('ArcSim Reliability Analysis')
+            );
+
+            const commentBody = `${output}`;
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }

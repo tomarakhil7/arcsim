@@ -1,0 +1,60 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: checkout-ingress
+  namespace: production
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "20"  # 20s timeout
+spec:
+  rules:
+  - host: checkout.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: checkout-service
+            port:
+              number: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-service
+  namespace: production
+  labels:
+    app: checkout
+    environment: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: checkout
+  template:
+    metadata:
+      labels:
+        app: checkout
+    spec:
+      containers:
+      - name: checkout-api
+        image: mycompany/checkout:v3.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: HTTP_TIMEOUT
+          value: "30000"  # 30s > 20s ingress timeout - PROBLEM!
+        - name: DATABASE_URL
+          value: "postgresql://user:pass@db:5432/checkout?connect_timeout=45"  # 45s > 30s - PROBLEM!
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
