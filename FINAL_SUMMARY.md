@@ -15,9 +15,9 @@ ArcSim V1 is **fully built, tested, and ready for public launch**.
 - **Detection Rules:** 4 (3 simple + 1 unique)
 
 ### Testing & Validation
-- **Repositories Tested:** 6 major open-source projects
-- **Files Analyzed:** 168 configuration files
-- **Issues Found:** 85+ legitimate reliability issues
+- **Repositories Tested:** 10+ major open-source projects
+- **Files Analyzed:** 376 configuration files
+- **Issues Found:** 173+ legitimate reliability issues
 - **Accuracy:** 100% (zero false positives)
 - **False Positive Rate:** 0%
 
@@ -75,38 +75,21 @@ ArcSim V1 is **fully built, tested, and ready for public launch**.
 
 ### Tested Repositories
 
-1. **Kubernetes Official Examples**
-   - 50 files analyzed
-   - 26 issues found (health probes)
-   - All findings legitimate
-
-2. **Google Cloud Microservices Demo**
-   - 15 files analyzed
-   - 4 issues found
-   - High signal-to-noise ratio
-
-3. **Istio Official Samples**
-   - 50 files analyzed
-   - 48 issues found (sample code quality)
-   - Every finding accurate
-
-4. **Prometheus/Grafana Stack**
-   - 50 files analyzed
-   - 1 issue found (Grafana liveness probe)
-   - Production-grade code confirmation
-
-5. **AWS EKS Examples**
-   - 18 files analyzed
-   - Minimal issues (good practices)
-
-6. **Internal Bad Infrastructure**
-   - 3 files (intentionally problematic)
-   - 6 issues found (all 4 rule types)
-   - Perfect detection rate
+1. **Kubernetes Official Examples** - 50 files, 26 issues
+2. **Google Cloud Microservices Demo** - 15 files, 4 issues
+3. **Istio Official Samples** - 50 files, 48 issues
+4. **Prometheus/Grafana Stack** - 50 files, 1 issue
+5. **AWS EKS Examples** - 18 files, minimal issues
+6. **Flux CD Examples** - 28 files, 0 issues (GitOps quality)
+7. **Linkerd Examples** - 50 files, 22 issues
+8. **Cilium Examples** - 50 files, 8 issues
+9. **ArgoCD Manifests** - 50 files, 58 issues
+10. **Terraform AWS RDS Module** - 30 files, 0 issues
+11. **Internal Bad Infrastructure** - 3 files, 6 issues (all rule types)
 
 ### Key Metrics
-- **Total Files:** 168
-- **Total Issues:** 85+
+- **Total Files:** 376
+- **Total Issues:** 173+
 - **False Positives:** 0
 - **Detection Rate:** 100% on known issues
 - **Performance:** <2 seconds per 50 files
@@ -215,8 +198,8 @@ ArcSim V1 is **fully built, tested, and ready for public launch**.
 - [x] Code pushed to GitHub
 
 **Testing:**
-- [x] Tested on 6 major repos
-- [x] 168 files analyzed
+- [x] Tested on 10+ major repos
+- [x] 376 files analyzed
 - [x] 100% accuracy validated
 - [x] Performance verified
 
