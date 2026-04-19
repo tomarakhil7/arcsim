@@ -1,0 +1,116 @@
+name: 'ArcSim Reliability Check'
+description: 'Detect reliability risks in Kubernetes and Terraform infrastructure before deployment'
+author: 'tomarakhil7'
+
+branding:
+  icon: 'shield'
+  color: 'red'
+
+inputs:
+  files:
+    description: 'Space-separated list of files to analyze (optional, auto-detects changed files in PR)'
+    required: false
+  github-token:
+    description: 'GitHub token for posting PR comments'
+    required: false
+    default: ${{ github.token }}
+  fail-on-critical:
+    description: 'Fail the check if critical issues are found'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install ArcSim
+      shell: bash
+      run: |
+        pip install PyYAML==6.0.1 python-hcl2==4.3.2 networkx==3.2.1
+
+    - name: Checkout ArcSim
+      uses: actions/checkout@v4
+      with:
+        repository: tomarakhil7/arcsim
+        path: .arcsim-tool
+
+    - name: Get changed files
+      if: inputs.files == ''
+      shell: bash
+      id: changed-files
+      run: |
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | \
+            grep -E '\.(yaml|yml|tf)$' > changed_files.txt || true
+        else
+          echo "Not a PR, analyzing all infrastructure files"
+          find . -name "*.yaml" -o -name "*.yml" -o -name "*.tf" | \
+            grep -v ".arcsim-tool" > changed_files.txt || true
+        fi
+
+        if [ ! -s changed_files.txt ]; then
+          echo "skip=true" >> $GITHUB_OUTPUT
+        else
+          echo "skip=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create file list from inputs
+      if: inputs.files != ''
+      shell: bash
+      run: |
+        echo "${{ inputs.files }}" | tr ' ' '\n' > changed_files.txt
+
+    - name: Run ArcSim
+      shell: bash
+      id: arcsim
+      if: steps.changed-files.outputs.skip != 'true'
+      run: |
+        python .arcsim-tool/arcsim/main.py --files changed_files.txt > arcsim_report.md
+
+        # Check if critical issues found
+        CRITICAL_COUNT=$(grep -c "🔴 Critical" arcsim_report.md || echo "0")
+        echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
+
+        if [ "$CRITICAL_COUNT" -gt 0 ] && [ "${{ inputs.fail-on-critical }}" == "true" ]; then
+          echo "❌ Found $CRITICAL_COUNT critical reliability issues"
+          exit 1
+        fi
+
+    - name: Post PR Comment
+      if: github.event_name == 'pull_request' && steps.changed-files.outputs.skip != 'true'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('arcsim_report.md', 'utf8');
+
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          const existingComment = comments.find(c =>
+            c.body.includes('ArcSim Reliability Analysis')
+          );
+
+          if (existingComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: report
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: report
+            });
+          }
