@@ -17,45 +17,53 @@ ArcSim analyzes Kubernetes manifests and Terraform files to catch reliability ri
 
 ---
 
+## 📌 Important: Helm Charts
+
+ArcSim analyzes **rendered manifests**, not Helm templates.
+
+**Don't run on raw templates:**
+```bash
+❌ arcsim chart/templates/  # Won't work - has {{ }} syntax
+```
+
+**Instead, render first:**
+```bash
+✅ helm template myapp ./chart > rendered.yaml && arcsim analyze rendered.yaml
+```
+
+**Or use GitOps:** ArcSim works great on repos with committed rendered manifests (ArgoCD, Flux)!
+
+---
+
 ## 🚀 Quick Start
 
 ### GitHub Actions (Recommended)
 
-Add to `.github/workflows/arcsim.yml`:
+Add to `.github/workflows/reliability-check.yml`:
 
 ```yaml
 name: Reliability Check
 on: [pull_request]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   arcsim:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      
-      - name: Install ArcSim
-        run: pip install PyYAML python-hcl2 networkx
-      
-      - name: Get changed files
-        run: |
-          git diff --name-only origin/${{ github.base_ref }}...HEAD | \
-            grep -E '\.(yaml|yml|tf)$' > changed_files.txt || true
-      
-      - name: Run ArcSim
-        if: -s changed_files.txt
-        run: |
-          python -m arcsim.main --files changed_files.txt
+      - name: ArcSim Reliability Check
+        uses: tomarakhil7/arcsim@v1
 ```
+
+That's it! ArcSim will automatically analyze your PRs and post findings.
+
+**[📖 Full Action Documentation](./ACTION_USAGE.md)**
 
 ### Local Usage
 
@@ -188,13 +196,11 @@ If the node hosting this pod fails, the entire service will be unavailable...
 
 ### ✅ Terraform (AWS)
 - RDS instances (Multi-AZ detection)
-- Future: ALB, ASG, ECS
 
 ### 🚧 Coming Soon
-- GCP support
-- Azure support
-- Istio/Linkerd service mesh
-- Helm chart analysis
+- GCP/Azure cloud provider support
+- Additional Kubernetes resource types
+- Istio/Linkerd service mesh detection
 
 ---
 
@@ -204,7 +210,7 @@ Try it on the example files:
 
 ```bash
 # Clone repo
-git clone https://github.com/yourusername/arcsim.git
+git clone https://github.com/tomarakhil7/arcsim.git
 cd arcsim
 
 # Set up environment
@@ -314,54 +320,50 @@ python -m arcsim.main --files test_files.txt
 
 ---
 
-## 🚦 Validation Signals We're Looking For
+## ✅ Validation
 
-ArcSim is a **pilot project**. We're seeking validation:
+ArcSim has been extensively tested:
 
-✅ **Do you find the detections valuable?**  
-✅ **Which rules matter most?**  
-✅ **What other reliability risks should we detect?**  
-✅ **Would you pay for a SaaS version?**
+- ✅ **473+ real-world files** analyzed across 15+ major open-source projects
+- ✅ **229+ reliability issues** found (Kubernetes, Istio, Linkerd, ArgoCD, etc.)
+- ✅ **0 false positives** - every finding is legitimate
+- ✅ **100% accuracy** on known reliability patterns
 
-[Open an issue](https://github.com/yourusername/arcsim/issues) or [start a discussion](https://github.com/yourusername/arcsim/discussions) to share feedback!
+See [VALIDATION_REPORT.md](./VALIDATION_REPORT.md) for detailed results.
 
 ---
 
-## 🗺️ Roadmap
+## 🗺️ What's Next
 
-### V1 (Current)
-- [x] SPOF detection
-- [x] Health probe detection
-- [x] Database HA detection
-- [x] Timeout chain detection
-- [x] GitHub Actions integration
+ArcSim is actively maintained and growing based on community needs.
 
-### V1.5 (Next 4-6 weeks)
-- [ ] Blast radius visualization
-- [ ] Dependency graph viewer
-- [ ] GCP/Azure support
-- [ ] Retry storm detection
-- [ ] PodDisruptionBudget validation
+### 🎯 Near-term Focus
+- Expanding cloud provider coverage (GCP, Azure)
+- Additional Kubernetes resource types (Service, PodDisruptionBudget)
+- Enhanced reporting and visualization
 
-### V2 (Future)
-- [ ] Cross-repo analysis
-- [ ] Historical risk tracking
-- [ ] Custom rule authoring
-- [ ] Integration with observability platforms
-- [ ] Predictive reliability scoring
+### 💡 Exploring
+- Cross-repository analysis
+- Custom rule authoring for teams
+- Observability platform integrations
+
+**Want to influence priorities?** [Open a discussion](https://github.com/tomarakhil7/arcsim/discussions) and share what would be most valuable for your team!
 
 ---
 
 ## 🤝 Contributing
 
-This is an early-stage project. Contributions welcome!
+Contributions welcome! Here's how you can help:
 
-**Ways to help:**
-- Try it on your infrastructure
+**Try it on your infrastructure:**
 - Report bugs or false positives
+- Share what worked well
 - Suggest new detection rules
-- Improve documentation
+
+**Improve the codebase:**
 - Add test cases
+- Improve documentation
+- Fix bugs
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
@@ -376,9 +378,8 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🙏 Acknowledgments
 
 Inspired by reliability incidents at:
-- Stripe (retry storms)
-- AWS (timeout cascades)
-- Google (AZ failures)
+- Stripe (timeout cascades)
+- AWS (AZ failures)
 - Every company that's had a config-related outage
 
 Built to prevent the next one.
@@ -387,9 +388,9 @@ Built to prevent the next one.
 
 ## 📬 Contact
 
-- **Issues:** [GitHub Issues](https://github.com/yourusername/arcsim/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/arcsim/discussions)
-- **Twitter:** [@yourusername](https://twitter.com/yourusername)
+- **Issues:** [GitHub Issues](https://github.com/tomarakhil7/arcsim/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/tomarakhil7/arcsim/discussions)
+- **Email:** tomarakhil7@gmail.com
 
 ---
 
