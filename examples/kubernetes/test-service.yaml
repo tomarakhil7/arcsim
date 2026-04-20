@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-service
+  namespace: production
+  labels:
+    app: test
+    environment: production
+spec:
+  replicas: 1  # This should trigger SPOF detection
+  selector:
+    matchLabels:
+      app: test
+  template:
+    metadata:
+      labels:
+        app: test
+    spec:
+      containers:
+      - name: test
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        # Missing readiness and liveness probes - should trigger warnings
