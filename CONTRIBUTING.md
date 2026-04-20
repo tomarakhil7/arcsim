@@ -61,7 +61,7 @@ Have an idea for a new detection rule or feature?
 
 ```bash
 # Fork the repo
-git clone https://github.com/yourusername/arcsim.git
+git clone https://github.com/tomarakhil7/arcsim.git
 cd arcsim
 
 # Set up environment

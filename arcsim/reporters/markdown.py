@@ -46,7 +46,7 @@ class MarkdownReporter:
         report += "ArcSim prevents fragile infrastructure changes from reaching production by detecting "
         report += "reliability risks before deployment. It analyzes Kubernetes manifests and Terraform files "
         report += "to catch common outage patterns.\n\n"
-        report += "*Analyzed by [ArcSim](https://github.com/yourusername/arcsim) - "
+        report += "*Analyzed by [ArcSim](https://github.com/tomarakhil7/arcsim) - "
         report += "Reliability guardrails for infrastructure*\n"
 
         return report
@@ -100,5 +100,5 @@ Your infrastructure changes look good from a reliability perspective. All checks
 
 ---
 
-*Analyzed by [ArcSim](https://github.com/yourusername/arcsim) - Reliability guardrails for infrastructure*
+*Analyzed by [ArcSim](https://github.com/tomarakhil7/arcsim) - Reliability guardrails for infrastructure*
 """
